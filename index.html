@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>สร้าง QR แบบสอบถาม — Mitsubishi Elevator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --red: #a6192e;
+    --red-dark: #7d1322;
+    --ink: #1c1c1c;
+    --paper: #faf9f7;
+    --line: #e2ddd6;
+    --muted: #6b6560;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", "Noto Sans Thai", system-ui, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    padding: 32px 16px 80px;
+  }
+  .wrap { max-width: 560px; margin: 0 auto; }
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    border-bottom: 3px solid var(--red);
+    padding-bottom: 14px;
+    margin-bottom: 28px;
+  }
+  .brand strong { font-size: 20px; letter-spacing: 0.2px; }
+  .brand span { font-size: 13px; color: var(--muted); }
+  h1 {
+    font-size: 22px;
+    margin: 0 0 6px;
+  }
+  .sub {
+    color: var(--muted);
+    font-size: 14px;
+    margin: 0 0 28px;
+    line-height: 1.5;
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .row { display: flex; gap: 10px; margin-bottom: 4px; }
+  input[type="text"] {
+    flex: 1;
+    padding: 12px 14px;
+    border: 1.5px solid var(--line);
+    border-radius: 6px;
+    font-size: 15px;
+    font-family: inherit;
+    background: #fff;
+  }
+  input[type="text"]:focus { outline: none; border-color: var(--red); }
+  button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 6px;
+    background: var(--red);
+    color: #fff;
+    font-size: 15px;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  button:hover { background: var(--red-dark); }
+  button:disabled { background: #c9c3bc; cursor: not-allowed; }
+  .hint { font-size: 12px; color: var(--muted); margin: 8px 0 0; }
+  .status { font-size: 14px; margin: 14px 0 0; min-height: 20px; }
+  .status.error { color: var(--red); }
+  .status.loading { color: var(--muted); }
+
+  .card {
+    margin-top: 24px;
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    padding: 22px;
+    display: none;
+  }
+  .card.show { display: block; }
+  .field { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .field:last-child { border-bottom: none; }
+  .field .k { color: var(--muted); }
+  .field .v { font-weight: 600; text-align: right; }
+
+  .qr-section {
+    margin-top: 22px;
+    text-align: center;
+    display: none;
+  }
+  .qr-section.show { display: block; }
+  #qrcode { display: inline-block; padding: 16px; background: #fff; border: 1.5px solid var(--line); border-radius: 10px; }
+  .qr-actions { margin-top: 14px; display: flex; gap: 10px; justify-content: center; }
+  .qr-actions button { background: var(--ink); }
+  .qr-actions button:hover { background: #000; }
+  .link-box {
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--muted);
+    word-break: break-all;
+    padding: 10px 12px;
+    background: var(--paper);
+    border-radius: 6px;
+    border: 1px solid var(--line);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <strong>MITSUBISHI ELECTRIC</strong>
+    <span>Elevator (Thailand)</span>
+  </div>
+
+  <h1>สร้าง QR แบบสอบถามความพึงพอใจ</h1>
+  <p class="sub">กรอกรหัสโครงการ (WBS) ระบบจะดึงข้อมูลโครงการจากชีตล่าสุดให้อัตโนมัติ แล้วสร้าง QR code สำหรับพิมพ์แจกลูกค้าได้ทันที</p>
+
+  <label for="wbs">รหัสโครงการ (WBS)</label>
+  <div class="row">
+    <input type="text" id="wbs" placeholder="เช่น I-ZD049-01-A01-A01" autocomplete="off" />
+    <button id="lookupBtn">ค้นหา</button>
+  </div>
+  <p class="hint">พิมพ์รหัสให้ตรงกับที่อยู่ในคอลัมน์ WBS LV.4 ของชีต (ตัวพิมพ์เล็ก/ใหญ่ไม่มีผล)</p>
+  <p class="status" id="status"></p>
+
+  <div class="card" id="resultCard">
+    <div class="field"><span class="k">รหัสโครงการ</span><span class="v" id="r-wbs"></span></div>
+    <div class="field"><span class="k">ชื่อโครงการ</span><span class="v" id="r-name"></span></div>
+    <div class="field"><span class="k">ฝ่ายประสานงาน</span><span class="v" id="r-co"></span></div>
+    <div class="field"><span class="k">ผู้รับเหมา</span><span class="v" id="r-sub"></span></div>
+    <div class="field"><span class="k">วันที่รับมอบโครงการ</span><span class="v" id="r-date"></span></div>
+  </div>
+
+  <div class="qr-section" id="qrSection">
+    <div id="qrcode"></div>
+    <div class="qr-actions">
+      <button id="downloadBtn">ดาวน์โหลด QR (PNG)</button>
+      <button id="copyLinkBtn">คัดลอกลิงก์</button>
+    </div>
+    <div class="link-box" id="linkBox"></div>
+  </div>
+</div>
+
+<script>
+// ---------- Configuration ----------
+const SHEET_ID = "1PzApRY24FoDEe8k7A_ge7Pe2_mkV4qu99Xh98VZYNUk";
+const JOTFORM_BASE_URL = "https://form.jotform.com/262430335197052";
+
+// Column positions (0-indexed) in the "All data" sheet, matching WBS LV.4(A)=0,
+// Project name(E)=4, Co(Q)=16, Subcontractor(T)=19, 5030A / handover date(BP)=67
+const COL = { wbs: 0, name: 4, co: 16, sub: 19, date: 67 };
+const HEADER_ROWS_TO_SKIP = 2; // first two rows in the sheet are header/label rows
+
+// Jotform field unique names used for the prefill link (must match the form's
+// read-only fields: รหัสโครงการ / ชื่อโครงการ / ฝ่ายประสานงาน / ผู้รับเหมา / วันที่รับมอบ)
+const FIELD_NAMES = {
+  wbs: "wbsCode",
+  name: "projectName",
+  co: "coDept",
+  sub: "subcontractor",
+  date: "handoverDate",
+};
+
+// ---------- Elements ----------
+const wbsInput = document.getElementById("wbs");
+const lookupBtn = document.getElementById("lookupBtn");
+const statusEl = document.getElementById("status");
+const resultCard = document.getElementById("resultCard");
+const qrSection = document.getElementById("qrSection");
+const linkBox = document.getElementById("linkBox");
+let qrInstance = null;
+
+function setStatus(text, kind) {
+  statusEl.textContent = text || "";
+  statusEl.className = "status" + (kind ? " " + kind : "");
+}
+
+// ---------- Load the sheet via Google's gviz JSONP endpoint (no server needed) ----------
+function fetchSheetRows() {
+  return new Promise((resolve, reject) => {
+    const cbName = "gvizCallback_" + Date.now();
+    window[cbName] = function (response) {
+      try {
+        const rows = response.table.rows.map((r) =>
+          (r.c || []).map((cell) => (cell ? cell.v : ""))
+        );
+        resolve(rows);
+      } catch (e) {
+        reject(e);
+      } finally {
+        delete window[cbName];
+        script.remove();
+      }
+    };
+    const script = document.createElement("script");
+    script.src =
+      "https://docs.google.com/spreadsheets/d/" +
+      SHEET_ID +
+      "/gviz/tq?tqx=out:json;responseHandler=" +
+      cbName;
+    script.onerror = () => reject(new Error("โหลดข้อมูลจากชีตไม่สำเร็จ"));
+    document.body.appendChild(script);
+  });
+}
+
+function findProject(rows, wbsQuery) {
+  const q = wbsQuery.trim().toLowerCase();
+  for (let i = HEADER_ROWS_TO_SKIP; i < rows.length; i++) {
+    const row = rows[i];
+    const cellWbs = (row[COL.wbs] || "").toString().trim();
+    if (cellWbs.toLowerCase() === q) {
+      return {
+        wbs: cellWbs,
+        name: (row[COL.name] || "").toString().trim(),
+        co: (row[COL.co] || "").toString().trim(),
+        sub: (row[COL.sub] || "").toString().trim(),
+        date: (row[COL.date] || "").toString().trim(),
+      };
+    }
+  }
+  return null;
+}
+
+function buildJotformUrl(project) {
+  const params = new URLSearchParams();
+  params.set(FIELD_NAMES.wbs, project.wbs);
+  params.set(FIELD_NAMES.name, project.name);
+  params.set(FIELD_NAMES.co, project.co);
+  params.set(FIELD_NAMES.sub, project.sub);
+  params.set(FIELD_NAMES.date, project.date);
+  return JOTFORM_BASE_URL + "?" + params.toString();
+}
+
+function renderResult(project) {
+  document.getElementById("r-wbs").textContent = project.wbs || "-";
+  document.getElementById("r-name").textContent = project.name || "-";
+  document.getElementById("r-co").textContent = project.co || "-";
+  document.getElementById("r-sub").textContent = project.sub || "-";
+  document.getElementById("r-date").textContent = project.date || "-";
+  resultCard.classList.add("show");
+
+  const url = buildJotformUrl(project);
+  linkBox.textContent = url;
+
+  document.getElementById("qrcode").innerHTML = "";
+  qrInstance = new QRCode(document.getElementById("qrcode"), {
+    text: url,
+    width: 220,
+    height: 220,
+    correctLevel: QRCode.CorrectLevel.M,
+  });
+  qrSection.classList.add("show");
+}
+
+async function doLookup() {
+  const wbs = wbsInput.value.trim();
+  if (!wbs) {
+    setStatus("กรุณากรอกรหัสโครงการ (WBS) ก่อน", "error");
+    return;
+  }
+  resultCard.classList.remove("show");
+  qrSection.classList.remove("show");
+  lookupBtn.disabled = true;
+  setStatus("กำลังค้นหาในชีต...", "loading");
+  try {
+    const rows = await fetchSheetRows();
+    const project = findProject(rows, wbs);
+    if (!project) {
+      setStatus("ไม่พบรหัสโครงการนี้ในชีต กรุณาตรวจสอบรหัสอีกครั้ง", "error");
+    } else {
+      setStatus("");
+      renderResult(project);
+    }
+  } catch (e) {
+    setStatus(
+      "ดึงข้อมูลไม่สำเร็จ — ตรวจสอบว่าชีตเปิดสิทธิ์ \u201cAnyone with the link: Viewer\u201d แล้ว หรือลองใหม่อีกครั้ง",
+      "error"
+    );
+  } finally {
+    lookupBtn.disabled = false;
+  }
+}
+
+lookupBtn.addEventListener("click", doLookup);
+wbsInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") doLookup();
+});
+
+document.getElementById("downloadBtn").addEventListener("click", () => {
+  const canvas = document.querySelector("#qrcode canvas");
+  if (!canvas) return;
+  const wbs = document.getElementById("r-wbs").textContent || "qr";
+  const link = document.createElement("a");
+  link.download = "QR_" + wbs + ".png";
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+});
+
+document.getElementById("copyLinkBtn").addEventListener("click", () => {
+  const text = linkBox.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    setStatus("คัดลอกลิงก์แล้ว", "loading");
+    setTimeout(() => setStatus(""), 2000);
+  });
+});
+</script>
+</body>
+</html>
