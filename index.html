@@ -374,11 +374,14 @@ function renderPicker(matches) {
   matches.forEach((project) => {
     const btn = document.createElement("button");
     btn.className = "pick-item";
-    const extraBits = [project.factoryNo, project.model].filter(Boolean).join(" / ");
+    const extraBits = [];
+    if (project.factoryNo) extraBits.push("Factory No. " + project.factoryNo);
+    if (project.model) extraBits.push("Model " + project.model);
+    const extraText = extraBits.join(" / ");
     btn.innerHTML =
       '<div class="pw">' + project.wbs + '</div>' +
       '<div class="pn">' + (project.name || "-") +
-      (extraBits ? ' <span style="color:#9a938c;">(' + extraBits + ')</span>' : "") +
+      (extraText ? ' <span style="color:#9a938c;">(' + extraText + ')</span>' : "") +
       '</div>';
     btn.addEventListener("click", () => {
       pickerCard.style.display = "none";
