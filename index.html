@@ -112,6 +112,23 @@
     border-radius: 6px;
     border: 1px solid var(--line);
   }
+
+  .pick-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: #fff;
+    color: var(--ink);
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .pick-item:hover { border-color: var(--red); background: #fff7f6; }
+  .pick-item .pw { font-weight: 700; font-size: 14px; }
+  .pick-item .pn { font-size: 13px; color: var(--muted); margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -131,6 +148,11 @@
   </div>
   <p class="hint">พิมพ์รหัสให้ตรงกับที่อยู่ในคอลัมน์ WBS LV.4 ของชีต (ตัวพิมพ์เล็ก/ใหญ่ไม่มีผล)</p>
   <p class="status" id="status"></p>
+
+  <div class="card" id="pickerCard" style="display:none; padding: 10px 0;">
+    <p style="margin: 4px 4px 10px; font-size: 13px; color: var(--muted);">พบหลายรายการที่ตรงกับรหัสนี้ กรุณาเลือกโครงการที่ต้องการ</p>
+    <div id="pickerList"></div>
+  </div>
 
   <div class="card" id="resultCard">
     <div class="field"><span class="k">รหัสโครงการ</span><span class="v" id="r-wbs"></span></div>
@@ -176,6 +198,8 @@ const wbsInput = document.getElementById("wbs");
 const lookupBtn = document.getElementById("lookupBtn");
 const statusEl = document.getElementById("status");
 const resultCard = document.getElementById("resultCard");
+const pickerCard = document.getElementById("pickerCard");
+const pickerList = document.getElementById("pickerList");
 const qrSection = document.getElementById("qrSection");
 const linkBox = document.getElementById("linkBox");
 let qrInstance = null;
@@ -247,22 +271,29 @@ function fetchSheetRows() {
   });
 }
 
-function findProject(rows, wbsQuery) {
+function findProjects(rows, wbsQuery) {
   const q = wbsQuery.trim().toLowerCase();
+  const matches = [];
   for (let i = HEADER_ROWS_TO_SKIP; i < rows.length; i++) {
     const row = rows[i];
     const cellWbs = (row[COL.wbs] || "").toString().trim();
-    if (cellWbs.toLowerCase() === q) {
-      return {
+    if (!cellWbs) continue;
+    const cellWbsLower = cellWbs.toLowerCase();
+    if (cellWbsLower === q || cellWbsLower.startsWith(q)) {
+      matches.push({
         wbs: cellWbs,
         name: (row[COL.name] || "").toString().trim(),
         co: (row[COL.co] || "").toString().trim(),
         sub: (row[COL.sub] || "").toString().trim(),
         date: (row[COL.date] || "").toString().trim(),
-      };
+      });
+      if (cellWbsLower === q) {
+        // exact match found — still keep scanning in case of duplicates,
+        // but exact matches are prioritized when rendering below
+      }
     }
   }
-  return null;
+  return matches;
 }
 
 function buildJotformUrl(project) {
@@ -304,16 +335,27 @@ async function doLookup() {
   }
   resultCard.classList.remove("show");
   qrSection.classList.remove("show");
+  pickerCard.style.display = "none";
+  pickerList.innerHTML = "";
   lookupBtn.disabled = true;
   setStatus("กำลังค้นหาในชีต...", "loading");
   try {
     const rows = await fetchSheetRows();
-    const project = findProject(rows, wbs);
-    if (!project) {
+    const matches = findProjects(rows, wbs);
+    if (matches.length === 0) {
       setStatus("ไม่พบรหัสโครงการนี้ในชีต กรุณาตรวจสอบรหัสอีกครั้ง", "error");
-    } else {
+    } else if (matches.length === 1) {
       setStatus("");
-      renderResult(project);
+      renderResult(matches[0]);
+    } else {
+      const capped = matches.slice(0, 30);
+      const extra = matches.length - capped.length;
+      setStatus(
+        `พบ ${matches.length} รายการ เลือกโครงการที่ต้องการด้านล่าง` +
+          (extra > 0 ? ` (แสดง 30 รายการแรก พิมพ์รหัสให้เจาะจงขึ้นเพื่อลดจำนวน)` : ""),
+        ""
+      );
+      renderPicker(capped);
     }
   } catch (e) {
     setStatus(
@@ -323,6 +365,24 @@ async function doLookup() {
   } finally {
     lookupBtn.disabled = false;
   }
+}
+
+function renderPicker(matches) {
+  pickerList.innerHTML = "";
+  matches.forEach((project) => {
+    const btn = document.createElement("button");
+    btn.className = "pick-item";
+    btn.innerHTML =
+      '<div class="pw">' + project.wbs + '</div>' +
+      '<div class="pn">' + (project.name || "-") + '</div>';
+    btn.addEventListener("click", () => {
+      pickerCard.style.display = "none";
+      setStatus("");
+      renderResult(project);
+    });
+    pickerList.appendChild(btn);
+  });
+  pickerCard.style.display = "block";
 }
 
 lookupBtn.addEventListener("click", doLookup);
