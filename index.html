@@ -179,7 +179,7 @@ const JOTFORM_BASE_URL = "https://form.jotform.com/262430335197052";
 
 // Column positions (0-indexed) in the "All data" sheet, matching WBS LV.4(A)=0,
 // Project name(E)=4, Co(Q)=16, Subcontractor(T)=19, 5030A / handover date(BP)=67
-const COL = { wbs: 0, name: 4, co: 16, sub: 19, date: 67 };
+const COL = { wbs: 0, name: 4, co: 16, sub: 19, date: 67, factoryNo: 6, model: 8 };
 const HEADER_ROWS_TO_SKIP = 2; // first two rows in the sheet are header/label rows
 
 // Jotform field input names used for the prefill link. These map to the
@@ -286,6 +286,8 @@ function findProjects(rows, wbsQuery) {
         co: (row[COL.co] || "").toString().trim(),
         sub: (row[COL.sub] || "").toString().trim(),
         date: (row[COL.date] || "").toString().trim(),
+        factoryNo: (row[COL.factoryNo] || "").toString().trim(),
+        model: (row[COL.model] || "").toString().trim(),
       });
       if (cellWbsLower === q) {
         // exact match found — still keep scanning in case of duplicates,
@@ -372,9 +374,12 @@ function renderPicker(matches) {
   matches.forEach((project) => {
     const btn = document.createElement("button");
     btn.className = "pick-item";
+    const extraBits = [project.factoryNo, project.model].filter(Boolean).join(" / ");
     btn.innerHTML =
       '<div class="pw">' + project.wbs + '</div>' +
-      '<div class="pn">' + (project.name || "-") + '</div>';
+      '<div class="pn">' + (project.name || "-") +
+      (extraBits ? ' <span style="color:#9a938c;">(' + extraBits + ')</span>' : "") +
+      '</div>';
     btn.addEventListener("click", () => {
       pickerCard.style.display = "none";
       setStatus("");
