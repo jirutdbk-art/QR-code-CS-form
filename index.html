@@ -160,14 +160,15 @@ const JOTFORM_BASE_URL = "https://form.jotform.com/262430335197052";
 const COL = { wbs: 0, name: 4, co: 16, sub: 19, date: 67 };
 const HEADER_ROWS_TO_SKIP = 2; // first two rows in the sheet are header/label rows
 
-// Jotform field unique names used for the prefill link (must match the form's
-// read-only fields: รหัสโครงการ / ชื่อโครงการ / ฝ่ายประสานงาน / ผู้รับเหมา / วันที่รับมอบ)
+// Jotform field input names used for the prefill link. These map to the
+// form's internal Question IDs (42-46) for the read-only project-info fields:
+// รหัสโครงการ=42, ชื่อโครงการ=43, ฝ่ายประสานงาน=44, ผู้รับเหมา=45, วันที่รับมอบ=46
 const FIELD_NAMES = {
-  wbs: "wbsCode",
-  name: "projectName",
-  co: "coDept",
-  sub: "subcontractor",
-  date: "handoverDate",
+  wbs: "input42",
+  name: "input43",
+  co: "input44",
+  sub: "input45",
+  date: "input46",
 };
 
 // ---------- Elements ----------
