@@ -157,6 +157,7 @@
   <div class="card" id="resultCard">
     <div class="field"><span class="k">รหัสโครงการ</span><span class="v" id="r-wbs"></span></div>
     <div class="field"><span class="k">ชื่อโครงการ</span><span class="v" id="r-name"></span></div>
+    <div class="field"><span class="k">ลิฟต์เลขที่</span><span class="v" id="r-elevator"></span></div>
     <div class="field"><span class="k">ฝ่ายประสานงาน</span><span class="v" id="r-co"></span></div>
     <div class="field"><span class="k">ผู้รับเหมา</span><span class="v" id="r-sub"></span></div>
     <div class="field"><span class="k">วันที่รับมอบโครงการ</span><span class="v" id="r-date"></span></div>
@@ -191,6 +192,7 @@ const FIELD_NAMES = {
   co: "input44",
   sub: "input45",
   date: "input46",
+  elevatorNo: "input65",
 };
 
 // ---------- Elements ----------
@@ -313,12 +315,14 @@ function buildJotformUrl(project) {
   params.set(FIELD_NAMES.co, coDisplay);
   params.set(FIELD_NAMES.sub, subDisplay);
   params.set(FIELD_NAMES.date, project.date);
+  if (project.factoryNo) params.set(FIELD_NAMES.elevatorNo, project.factoryNo);
   return JOTFORM_BASE_URL + "?" + params.toString();
 }
 
 function renderResult(project) {
   document.getElementById("r-wbs").textContent = project.wbs || "-";
   document.getElementById("r-name").textContent = project.name || "-";
+  document.getElementById("r-elevator").textContent = project.factoryNo || "-";
   document.getElementById("r-co").textContent = project.co
     ? project.co + (project.coNameTH ? " (" + project.coNameTH + ")" : "")
     : "-";
