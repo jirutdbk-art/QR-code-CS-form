@@ -179,7 +179,7 @@ const JOTFORM_BASE_URL = "https://form.jotform.com/262430335197052";
 
 // Column positions (0-indexed) in the "All data" sheet, matching WBS LV.4(A)=0,
 // Project name(E)=4, Co(Q)=16, Subcontractor(T)=19, 5030A / handover date(BP)=67
-const COL = { wbs: 0, name: 4, co: 16, sub: 19, date: 67, factoryNo: 6, model: 8, coNameTH: 79 };
+const COL = { wbs: 0, name: 4, co: 16, sub: 19, date: 67, factoryNo: 6, model: 8, coNameTH: 79, subNameTH: 80 };
 const HEADER_ROWS_TO_SKIP = 2; // first two rows in the sheet are header/label rows
 
 // Jotform field input names used for the prefill link. These map to the
@@ -286,6 +286,7 @@ function findProjects(rows, wbsQuery) {
         co: (row[COL.co] || "").toString().trim(),
         coNameTH: (row[COL.coNameTH] || "").toString().trim(),
         sub: (row[COL.sub] || "").toString().trim(),
+        subNameTH: (row[COL.subNameTH] || "").toString().trim(),
         date: (row[COL.date] || "").toString().trim(),
         factoryNo: (row[COL.factoryNo] || "").toString().trim(),
         model: (row[COL.model] || "").toString().trim(),
@@ -315,7 +316,9 @@ function renderResult(project) {
   document.getElementById("r-co").textContent = project.co
     ? project.co + (project.coNameTH ? " (" + project.coNameTH + ")" : "")
     : "-";
-  document.getElementById("r-sub").textContent = project.sub || "-";
+  document.getElementById("r-sub").textContent = project.sub
+    ? project.sub + (project.subNameTH ? " (" + project.subNameTH + ")" : "")
+    : "-";
   document.getElementById("r-date").textContent = project.date || "-";
   resultCard.classList.add("show");
 
