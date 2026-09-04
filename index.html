@@ -301,11 +301,17 @@ function findProjects(rows, wbsQuery) {
 }
 
 function buildJotformUrl(project) {
+  const coDisplay = project.co
+    ? project.co + (project.coNameTH ? " (" + project.coNameTH + ")" : "")
+    : "";
+  const subDisplay = project.sub
+    ? project.sub + (project.subNameTH ? " (" + project.subNameTH + ")" : "")
+    : "";
   const params = new URLSearchParams();
   params.set(FIELD_NAMES.wbs, project.wbs);
   params.set(FIELD_NAMES.name, project.name);
-  params.set(FIELD_NAMES.co, project.co);
-  params.set(FIELD_NAMES.sub, project.sub);
+  params.set(FIELD_NAMES.co, coDisplay);
+  params.set(FIELD_NAMES.sub, subDisplay);
   params.set(FIELD_NAMES.date, project.date);
   return JOTFORM_BASE_URL + "?" + params.toString();
 }
