@@ -99,6 +99,7 @@
   }
   .qr-section.show { display: block; }
   #qrcode { display: inline-block; padding: 16px; background: #fff; border: 1.5px solid var(--line); border-radius: 10px; }
+  #qrcode img, #qrcode canvas { max-width: 260px; height: auto; }
   .qr-actions { margin-top: 14px; display: flex; gap: 10px; justify-content: center; }
   .qr-actions button { background: var(--ink); }
   .qr-actions button:hover { background: #000; }
@@ -338,9 +339,9 @@ function renderResult(project) {
   document.getElementById("qrcode").innerHTML = "";
   qrInstance = new QRCode(document.getElementById("qrcode"), {
     text: url,
-    width: 220,
-    height: 220,
-    correctLevel: QRCode.CorrectLevel.M,
+    width: 400,
+    height: 400,
+    correctLevel: QRCode.CorrectLevel.H,
   });
   qrSection.classList.add("show");
 }
